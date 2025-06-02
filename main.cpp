@@ -1,4 +1,5 @@
 #include <Windows.h>
+#include <thread>
 #include "DriverComm.h"
 #include "RecoilManager.h"
 #include "ConfigManager.h"
@@ -14,25 +15,24 @@ void ProcessHotkeys() {
 }
 
 int main() {
-    // Initialize ImGui, Window, etc.
-    // (Boilerplate ImGui DX11/GLFW initialization here)
-
+    DriverComm::Init();
     ConfigManager::LoadConfig("recoil_config.json");
+
+    // Initialize ImGui window here (setup ImGui context, window, etc.)
 
     while (true) {
         ProcessHotkeys();
 
-        // Read active weapon from game memory via DriverComm
         int weaponId = DriverComm::ReadWeaponId();
-
         std::string weaponName = WeaponDetection::GetWeaponName(weaponId);
 
-        if (recoilEnabled) {
+        if (recoilEnabled && weaponName != "Unknown") {
             RecoilManager::ApplyRecoil(weaponName);
         }
 
         // ImGui rendering
-        ImGui::Begin("RustRecoilComp");
+        ImGui::Begin("Rust Recoil Compensation");
+        ImGui::Text("Weapon: %s", weaponName.c_str());
         ImGui::Text("Recoil: %s (F1)", recoilEnabled ? "ON" : "OFF");
         if (ImGui::Button("Save Config")) {
             ConfigManager::SaveConfig("recoil_config.json");
@@ -42,7 +42,9 @@ int main() {
         }
         ImGui::End();
 
-        // (Render ImGui)
+        // (Your ImGui render present code here...)
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(5)); // Small frame delay
     }
 
     return 0;
